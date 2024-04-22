@@ -1,0 +1,58 @@
+
+from machine import Pin, UART
+import time
+import urequests
+import network
+
+
+pin0=Pin('LED', Pin.OUT)
+pin0.value(1)
+
+pin26=Pin(26, Pin.OUT)
+pin27=Pin(27, Pin.OUT)
+
+pin26.value(0)
+pin27.value(0)
+
+uart = UART(0, baudrate=9600, tx=Pin(16), rx=Pin(17))
+uart.init(bits=8, parity=None, stop=1)
+
+
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
+wlan.connect("Hoangdeptrai2k4_24","07036525")
+
+while not wlan.isconnected():
+    print ('Connecting to wifi...')
+    time.sleep(1)
+   
+print('Connected to wifi')
+server_url ='http://192.168.1.186:3000/upload'
+
+while True:
+    value= uart.read()
+    
+    
+# declaring byte value
+    if isinstance(value,bytes):
+        value=bytearray(value)
+        value=value[1:4]
+        print(value)
+# converting to int
+# byteorder is big where MSB is at start
+        int_val = int.from_bytes(value, "little")
+# printing int equivalent
+        print(int_val)
+        
+        data={'data': str(int_val)}
+        try:
+            response =urequests.post(server_url, json=data)
+            response.close()
+            print('Data sent successfully')
+        except Exception as e:
+            print('Error sending data:', e)
+        print()
+        
+
+
+
